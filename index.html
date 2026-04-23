@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HumanizeAI — Master Pipeline</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Lora:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Noise Overlay -->
+  <div class="noise-overlay"></div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="logo">
+      <span class="logo-dot"></span>
+      <span class="logo-text">Humanize<em>AI</em></span>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn active" data-tab="pipeline">Pipeline</button>
+      <button class="nav-btn" data-tab="database">Database</button>
+      <button class="nav-btn" data-tab="paraphraser">Paraphraser</button>
+      <button class="nav-btn" data-tab="logs">Logs</button>
+    </nav>
+    <div class="status-pill">
+      <span class="status-dot"></span> System Ready
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- ===== TAB: PIPELINE ===== -->
+    <section class="tab-panel active" id="tab-pipeline">
+      <div class="section-label">master_pipeline.py</div>
+
+      <div class="pipeline-grid">
+
+        <!-- Input Block -->
+        <div class="card card--input">
+          <div class="card-header">
+            <span class="card-title">Input Text</span>
+            <span class="card-tag">AI-Generated</span>
+          </div>
+          <textarea id="inputText" class="textarea" placeholder="Paste your AI-generated text here...
+&#10;e.g. Furthermore, it is crucial to delve into the data. The system processes the data efficiently..."></textarea>
+          <div class="input-meta">
+            <span id="inputWordCount">0 words</span>
+            <button class="btn-ghost" id="clearBtn">Clear</button>
+          </div>
+        </div>
+
+        <!-- Controls Block -->
+        <div class="card card--controls">
+          <div class="card-header">
+            <span class="card-title">Pipeline Config</span>
+          </div>
+
+          <div class="control-group">
+            <label class="control-label">Target Score</label>
+            <div class="slider-row">
+              <input type="range" id="targetScore" min="50" max="100" value="95" class="slider"/>
+              <span class="slider-val" id="targetScoreVal">95</span>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label class="control-label">Max Iterations</label>
+            <div class="slider-row">
+              <input type="range" id="maxIter" min="1" max="10" value="3" class="slider"/>
+              <span class="slider-val" id="maxIterVal">3</span>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label class="control-label">Steps</label>
+            <div class="step-toggles">
+              <label class="toggle">
+                <input type="checkbox" checked data-step="paraphraser"/> ML Paraphraser
+              </label>
+              <label class="toggle">
+                <input type="checkbox" checked data-step="repetitions"/> Fix Repetitions
+              </label>
+              <label class="toggle">
+                <input type="checkbox" checked data-step="variation"/> Sentence Variation
+              </label>
+              <label class="toggle">
+                <input type="checkbox" checked data-step="contractions"/> Contractions
+              </label>
+              <label class="toggle">
+                <input type="checkbox" checked data-step="synonyms"/> Synonym Swap
+              </label>
+            </div>
+          </div>
+
+          <button class="btn-run" id="runBtn">
+            <span class="btn-run-text">Run Pipeline</span>
+            <span class="btn-run-icon">▶</span>
+          </button>
+        </div>
+
+        <!-- Score Block -->
+        <div class="card card--score">
+          <div class="card-header">
+            <span class="card-title">Humanize Score</span>
+          </div>
+          <div class="score-display">
+            <svg class="score-ring" viewBox="0 0 120 120">
+              <circle class="ring-bg" cx="60" cy="60" r="52"/>
+              <circle class="ring-fg" id="ringFg" cx="60" cy="60" r="52"
+                stroke-dasharray="326.7"
+                stroke-dashoffset="326.7"/>
+            </svg>
+            <div class="score-center">
+              <span class="score-num" id="scoreNum">—</span>
+              <span class="score-label">/100</span>
+            </div>
+          </div>
+          <div class="score-breakdown" id="scoreBreakdown">
+            <div class="breakdown-row">
+              <span>Perplexity</span><span class="breakdown-val">—</span>
+            </div>
+            <div class="breakdown-row">
+              <span>Burstiness</span><span class="breakdown-val">—</span>
+            </div>
+            <div class="breakdown-row">
+              <span>Vocab Diversity</span><span class="breakdown-val">—</span>
+            </div>
+            <div class="breakdown-row">
+              <span>Pattern Score</span><span class="breakdown-val">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Output Block -->
+        <div class="card card--output">
+          <div class="card-header">
+            <span class="card-title">Humanized Output</span>
+            <span class="card-tag card-tag--green">Human-Like</span>
+          </div>
+          <div class="output-box" id="outputBox">
+            <span class="output-placeholder">Your humanized text will appear here after running the pipeline...</span>
+          </div>
+          <div class="output-actions">
+            <button class="btn-ghost" id="copyBtn">Copy</button>
+            <button class="btn-ghost" id="scoreOutputBtn">Score This</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Progress Strip -->
+      <div class="progress-strip" id="progressStrip" style="display:none;">
+        <div class="progress-steps" id="progressSteps"></div>
+        <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
+      </div>
+
+    </section>
+
+    <!-- ===== TAB: DATABASE ===== -->
+    <section class="tab-panel" id="tab-database">
+      <div class="section-label">db_builder.py + MySQL</div>
+
+      <div class="db-grid">
+
+        <div class="card card--full">
+          <div class="card-header">
+            <span class="card-title">word_replacements</span>
+            <span class="card-tag">MySQL Table</span>
+          </div>
+          <div class="db-search-bar">
+            <input type="text" id="dbSearch" class="db-search" placeholder="Filter by AI word..."/>
+            <select class="db-filter" id="registerFilter">
+              <option value="">All Registers</option>
+              <option value="informal">Informal</option>
+              <option value="formal">Formal</option>
+              <option value="both">Both</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table class="db-table" id="dbTable">
+              <thead>
+                <tr>
+                  <th>AI Word / Phrase</th>
+                  <th>Human Alternatives</th>
+                  <th>Register</th>
+                </tr>
+              </thead>
+              <tbody id="dbTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="db-schema-row">
+          <div class="card card--schema">
+            <div class="card-header"><span class="card-title">synonym_cache</span><span class="card-tag">Schema</span></div>
+            <pre class="code-block">CREATE TABLE synonym_cache (
+  word    VARCHAR(255),
+  pos     VARCHAR(10),
+  synonyms JSON,
+  PRIMARY KEY (word, pos)
+)</pre>
+          </div>
+          <div class="card card--schema">
+            <div class="card-header"><span class="card-title">phrase_pattern</span><span class="card-tag">Schema</span></div>
+            <pre class="code-block">CREATE TABLE phrase_pattern (
+  pattern_regex      TEXT,
+  replacement_template TEXT,
+  category           VARCHAR(50)
+)</pre>
+          </div>
+          <div class="card card--schema">
+            <div class="card-header"><span class="card-title">human_feedback_log</span><span class="card-tag">Schema</span></div>
+            <pre class="code-block">CREATE TABLE human_feedback_log (
+  id               INT AUTO_INCREMENT,
+  original_ai_text TEXT,
+  human_edited_text TEXT,
+  quality_score    FLOAT DEFAULT 0,
+  status           ENUM('pending','approved',
+                        'rejected','trained'),
+  model_version    VARCHAR(50),
+  created_at       TIMESTAMP DEFAULT NOW(),
+  INDEX(status)
+)</pre>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ===== TAB: PARAPHRASER ===== -->
+    <section class="tab-panel" id="tab-paraphraser">
+      <div class="section-label">paraphraser.py</div>
+
+      <div class="para-grid">
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Model Configuration</span>
+            <span class="card-tag">T5 Paraphrase PAWS</span>
+          </div>
+          <div class="model-info">
+            <div class="model-row"><span>Model</span><code>Vamsi/T5_Paraphrase_Paws</code></div>
+            <div class="model-row"><span>Device</span><code id="deviceTag">CPU / CUDA</code></div>
+            <div class="model-row"><span>Max Length</span><code>256 tokens</code></div>
+            <div class="model-row"><span>Strategy</span><code>Sampling (do_sample=True)</code></div>
+          </div>
+          <div class="param-group">
+            <div class="param-row">
+              <label>Temperature</label>
+              <div class="slider-row">
+                <input type="range" min="0.1" max="1.5" step="0.05" value="0.9" class="slider" id="tempSlider"/>
+                <span class="slider-val" id="tempVal">0.9</span>
+              </div>
+            </div>
+            <div class="param-row">
+              <label>Top-K</label>
+              <div class="slider-row">
+                <input type="range" min="10" max="100" value="50" class="slider" id="topkSlider"/>
+                <span class="slider-val" id="topkVal">50</span>
+              </div>
+            </div>
+            <div class="param-row">
+              <label>Top-P</label>
+              <div class="slider-row">
+                <input type="range" min="0.5" max="1.0" step="0.01" value="0.95" class="slider" id="toppSlider"/>
+                <span class="slider-val" id="toppVal">0.95</span>
+              </div>
+            </div>
+            <div class="param-row">
+              <label>Num Sequences</label>
+              <div class="slider-row">
+                <input type="range" min="1" max="10" value="3" class="slider" id="numSeqSlider"/>
+                <span class="slider-val" id="numSeqVal">3</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Paraphrase Tester</span>
+          </div>
+          <textarea class="textarea" id="paraInput" placeholder="Enter a sentence to paraphrase (min 8 words)...
+&#10;e.g. The system processes the data efficiently and stores results."></textarea>
+          <button class="btn-run" id="paraRunBtn" style="margin-top:1rem;">
+            <span class="btn-run-text">Paraphrase</span>
+            <span class="btn-run-icon">↻</span>
+          </button>
+          <div class="para-results" id="paraResults"></div>
+        </div>
+
+        <div class="card card--full">
+          <div class="card-header">
+            <span class="card-title">Generation Flow</span>
+          </div>
+          <div class="flow-diagram">
+            <div class="flow-step">
+              <div class="flow-icon">📝</div>
+              <div class="flow-label">Input Sentence</div>
+              <div class="flow-sub">sent_tokenize()</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <div class="flow-icon">🔤</div>
+              <div class="flow-label">Tokenize</div>
+              <div class="flow-sub">T5Tokenizer<br>max_length=256</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <div class="flow-icon">🧠</div>
+              <div class="flow-label">T5 Generate</div>
+              <div class="flow-sub">temp=0.9, top_k=50<br>rep_penalty=1.2</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <div class="flow-icon">🎲</div>
+              <div class="flow-label">Deduplicate</div>
+              <div class="flow-sub">random.choice()</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <div class="flow-icon">✅</div>
+              <div class="flow-label">Best Output</div>
+              <div class="flow-sub">≠ original</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ===== TAB: LOGS ===== -->
+    <section class="tab-panel" id="tab-logs">
+      <div class="section-label">Console / Runtime Logs</div>
+
+      <div class="logs-wrap">
+        <div class="logs-header">
+          <span class="card-title">Pipeline Console</span>
+          <div class="logs-actions">
+            <button class="btn-ghost" id="clearLogsBtn">Clear</button>
+            <button class="btn-ghost" id="exportLogsBtn">Export</button>
+          </div>
+        </div>
+        <div class="console-box" id="consoleBox">
+          <div class="console-line console-info">[System] HumanizeAI Frontend initialized.</div>
+          <div class="console-line console-info">[System] Waiting for pipeline run...</div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+mysql-connector-python
+nltk
+spacy
+torch==2.2.2
+transformers==4.40.2
+tokenizers==0.19.1
+sentencepiece
+pandas
